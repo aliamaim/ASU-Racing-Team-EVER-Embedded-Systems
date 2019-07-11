@@ -19,8 +19,7 @@
 
 enum edge {RISING, FALLING};
 
-static volatile float time = 0;
-static volatile uint32_t pulse_ticks_g = 0; //Number of clock ticks that passed during "high" part of the echo signal.
+
 static volatile uint16_t t1_g = 0; //Time of occurrence of rising edge 
 static volatile uint16_t t2_g = 0; //Time of occurrence of falling edge
 static volatile enum edge current_edge_g = RISING;
@@ -29,10 +28,16 @@ void icu_init(void);
 
 int main(void)
 {
+	float time = 0;
+	float distance = 0;
+	uint32_t pulse_ticks_g = 0; //Number of clock ticks that passed during "high" part of the echo signal.
 	sei(); //Enable global interrupts
 	LCD_init(); /* initialize LCD */
-	//LCD_displayString("High time = ");
+	LCD_displayString("Distance = ");
 	icu_init();
+	
+	DDRB |= (1 << PORTB1);
+	
     while (1) 
     {
 		if(t2_g > t1_g)
@@ -40,15 +45,24 @@ int main(void)
 		else
 			pulse_ticks_g = (65535 - (uint32_t)t1_g + t2_g);
 		time = (float)pulse_ticks_g * 1024 / F_CPU;
+		distance = DISTANCE(time);
+		
+		if(distance < 2500) //2.5 meters
+			PORTB |= (1 << PORTB1);
+		else
+			PORTB &= ~(1 << PORTB1);
+		
+		
 		LCD_goToRowColumn(1, 0);
 		LCD_floatToString(DISTANCE(time));
+		
     }
 }
 
 
 /*
-* 8-bit timer
-* Init timer in Normal Mode
+* 16-bit timer
+* Init timer in Input Capture Mode
 *  
 */
 void icu_init(void)
@@ -60,7 +74,7 @@ void icu_init(void)
 	* WGM13 = 0, WGM12 = 0.  Normal Mode
 	* ICNC1 = 0. Disable Input Capture Noise Filter
 	* ICES1 = 1. Initially set the input capture at rising edge (will be toggled at each capture)
-	* CS12 CS11 CS10 (0 0 1), set clock to CPU_CLOCK/1024.
+	* CS12 CS11 CS10 (1 0 1), set clock to CPU_CLOCK/1024.
 	*/
 	TIFR1 |= (1<<ICF1); //Clear input capture flag
 	TIMSK1 |= (1 << ICIE1); //Enable interrupts on Input Capture for timer1
