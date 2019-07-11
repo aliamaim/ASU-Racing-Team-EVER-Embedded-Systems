@@ -172,6 +172,13 @@ void LCD_intgerToString(uint32_t data)
    LCD_displayString(buff);
 }
 
+void LCD_floatToString(float data)
+{
+	char buff[16]; /* String to hold the ascii result */
+	dtostrf(data, 7, 3, buff); /* 10 for decimal */
+	LCD_displayString(buff);
+}
+
 void LCD_clearScreen(void)
 {
 	LCD_sendCommand(CLEAR_COMMAND); //clear display 
