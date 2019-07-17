@@ -11,7 +11,7 @@
 #include <util/delay.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "lcd.h"
+//#include "lcd.h"
 #include <math.h>
 
 #define TIMER1_ICP1 0
@@ -32,14 +32,20 @@ int main(void)
 	float distance = 0;
 	uint32_t pulse_ticks_g = 0; //Number of clock ticks that passed during "high" part of the echo signal.
 	sei(); //Enable global interrupts
-	LCD_init(); /* initialize LCD */
-	LCD_displayString("Distance = ");
+	//LCD_init(); /* initialize LCD */
+	//LCD_displayString("Distance = ");
 	icu_init();
 	
-	DDRB |= (1 << PORTB1);
-	
+	DDRB |= (1 << PORTB1); //Trigger pin, O/P
+	DDRB |= (1 << PORTB4);
     while (1) 
     {
+		/* Sensor is triggered by 10 us high signal, give low first to ensure clean high */
+		PORTB &= ~(1 << PORTB1);
+		_delay_us(5);
+		PORTB |= (1 << PORTB1);
+		_delay_us(15);
+		PORTB &= ~(1 << PORTB1);
 		if(t2_g > t1_g)
 			pulse_ticks_g = t2_g - t1_g;
 		else
@@ -48,14 +54,14 @@ int main(void)
 		distance = DISTANCE(time);
 		
 		if(distance < 2500) //2.5 meters
-			PORTB |= (1 << PORTB1);
+			PORTB |= (1 << PORTB4);
 		else
-			PORTB &= ~(1 << PORTB1);
+			PORTB &= ~(1 << PORTB4);
 		
 		
-		LCD_goToRowColumn(1, 0);
-		LCD_floatToString(DISTANCE(time));
-		
+	//	LCD_goToRowColumn(1, 0);
+	//	LCD_floatToString(DISTANCE(time));
+		_delay_ms(100);
     }
 }
 
