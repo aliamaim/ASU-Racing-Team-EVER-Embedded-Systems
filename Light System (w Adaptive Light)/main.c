@@ -86,8 +86,7 @@ ISR(TIMER0_OVF_vect)
 {
 	if(signal_state == Waiting)
 	{
-		if(!(((BIT_IS_SET(PIND, LEFTSIGNAL_OUT) && BIT_IS_SET(PIND, RIGHTSIGNAL_OUT))) ||
-		(BIT_IS_CLEAR(PIND, LEFTSIGNAL_OUT) && BIT_IS_CLEAR(PIND, RIGHTSIGNAL_OUT))))
+		if(BIT_IS_SET(PIND, LEFTSIGNAL_OUT) != BIT_IS_SET(PIND, RIGHTSIGNAL_OUT))
 		{
 			PORTD &= ~(1 << LEFTSIGNAL_OUT | 1 << RIGHTSIGNAL_OUT); // Make sure both are the same state to avoid desync between the right & left signals.
 		}
